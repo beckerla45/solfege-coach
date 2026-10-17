@@ -1,20 +1,25 @@
-// A small piano-like synth built from Web Audio oscillators.
+// A small, clean-toned keyboard synth built from Web Audio oscillators.
+// Each note is a pure sine with a faint octave overtone, so a chord sounds like exactly
+// its notes and doesn't imply a phantom bass note below them.
 import { midiToFreq } from './theory.js';
 
 const PARTIALS = [
-  { type: 'triangle', mult: 1, gain: 1 },
-  { type: 'sine', mult: 2, gain: 0.22 },
-  { type: 'sine', mult: 3, gain: 0.07 },
+  { mult: 1, gain: 1 },
+  { mult: 2, gain: 0.06 },
 ];
 const RELEASE = 0.35;
 
 export class Synth {
   constructor(ctx) {
     this.ctx = ctx;
-    this.comp = ctx.createDynamicsCompressor();
+    // Acts only as a safety limiter near full scale, so normal playback isn't compressed.
+    this.limiter = ctx.createDynamicsCompressor();
+    this.limiter.threshold.value = -3;
+    this.limiter.knee.value = 0;
+    this.limiter.ratio.value = 20;
     this.out = ctx.createGain();
     this.out.gain.value = 0.6;
-    this.out.connect(this.comp).connect(ctx.destination);
+    this.out.connect(this.limiter).connect(ctx.destination);
     this.endTime = 0;
   }
 
@@ -25,26 +30,22 @@ export class Synth {
     const { ctx } = this;
     const f = midiToFreq(midi);
     const env = ctx.createGain();
-    const filt = ctx.createBiquadFilter();
-    filt.type = 'lowpass';
-    filt.frequency.setValueAtTime(Math.min(f * 10, 9000), start);
-    filt.frequency.exponentialRampToValueAtTime(Math.max(f * 2.5, 500), start + dur);
-    filt.connect(env).connect(this.out);
+    env.connect(this.out);
 
     env.gain.setValueAtTime(0, start);
-    env.gain.linearRampToValueAtTime(vel, start + 0.012);
-    env.gain.exponentialRampToValueAtTime(vel * 0.35, start + 0.45);
-    env.gain.setValueAtTime(vel * 0.35, start + dur);
+    env.gain.linearRampToValueAtTime(vel, start + 0.02);
+    env.gain.exponentialRampToValueAtTime(vel * 0.5, start + 0.5);
+    env.gain.setValueAtTime(vel * 0.5, start + dur);
     env.gain.linearRampToValueAtTime(0, start + dur + RELEASE);
 
     const stopAt = start + dur + RELEASE + 0.05;
     for (const p of PARTIALS) {
       const osc = ctx.createOscillator();
       const g = ctx.createGain();
-      osc.type = p.type;
+      osc.type = 'sine';
       osc.frequency.value = f * p.mult;
       g.gain.value = p.gain;
-      osc.connect(g).connect(filt);
+      osc.connect(g).connect(env);
       osc.start(start);
       osc.stop(stopAt);
     }

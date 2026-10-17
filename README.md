@@ -42,7 +42,7 @@ playback style, tolerance, auto-listen, letter names on/off.
 | File | Purpose |
 | --- | --- |
 | `js/theory.js` | Pitch math, syllables (incl. chromatic), la-based minor scales, chords, voice ranges |
-| `js/synth.js` | Web Audio piano-like synth |
+| `js/synth.js` | Web Audio keyboard synth with a clean, near-pure tone |
 | `js/pitch.js` | Mic input, YIN pitch detection, noise calibration, single-note capture |
 | `js/drillCommon.js` | Shared drill logic: chord playback, attempt analysis, grading, feedback framing |
 | `js/triadDrill.js` | Drill 1: sing a chord tone of the triad |
