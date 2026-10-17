@@ -83,6 +83,14 @@ h3:first-child { margin-top: 0; }
 @keyframes pulse { 50% { opacity: .65; } }
 
 .drill-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.segmented { display: inline-flex; background: var(--chip); border-radius: 10px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+.seg {
+  border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 600;
+  padding: 6px 12px; border-radius: 8px; cursor: pointer;
+}
+.seg.active { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
+.chord-tones:empty { display: none; }
+.settings h3 { margin: 6px 0 -4px; font-size: .95rem; color: var(--muted); }
 .key-label { color: var(--muted); font-size: .95rem; min-height: 1.4em; }
 .range-pick { color: var(--muted); font-size: .9rem; }
 .range-pick select { margin-left: 6px; }

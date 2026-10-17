@@ -1,7 +1,9 @@
-// UI controller: tabs, settings, the triad drill flow, the pitch trace, progress, and the Learn page.
+// UI controller: tabs, settings, the drill flow, the pitch trace, progress, and the Learn page.
 import { Synth } from './synth.js';
 import { PitchTracker, captureNote } from './pitch.js';
-import { makeQuestion, chordEvents, analyzeAttempt, feedback } from './triadDrill.js';
+import { chordEvents, analyzeAttempt } from './drillCommon.js';
+import * as triadDrill from './triadDrill.js';
+import * as sightDrill from './sightDrill.js';
 import {
   CHORDS, CHORD_ROLES, MAJOR_SCALE, MINOR_SCALES, SYLLABLE_SEMIS, VOICES,
   mod, noteName, pitchClassName, syllableName,
@@ -10,6 +12,7 @@ import {
 const $ = (id) => document.getElementById(id);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const NOTE_MS = 1600, SETTLE_MS = 200;
+const DRILLS = { [triadDrill.id]: triadDrill, [sightDrill.id]: sightDrill };
 
 // ---------- persistence ----------
 const store = {
@@ -21,13 +24,20 @@ const store = {
 };
 
 const DEFAULTS = {
-  voice: 'baritone', chord: 'major', targets: [0, 1, 2], style: 'block',
+  drill: 'triad', voice: 'baritone', chord: 'major', targets: [0, 1, 2], sightPool: 'all', style: 'block',
   tolerance: 25, auto: true, sameKey: false, letters: true, volume: 0.6,
 };
 const settings = store.get('solfege.settings', DEFAULTS);
 // v2: the chord is presented as a block chord by default (earlier saves defaulted to arpeggio + chord).
 if (!settings.v2) { settings.style = 'block'; settings.v2 = true; }
-const progress = store.get('solfege.progress', { bySyl: {} });
+if (!DRILLS[settings.drill]) settings.drill = DEFAULTS.drill;
+const drill = () => DRILLS[settings.drill];
+// Progress per drill: progress.drills[drillId][statKey] = { n, inTune, absCents, onNote }.
+const progress = store.get('solfege.progress', { drills: {} });
+if (progress.bySyl) { // saves from before there was more than one drill were all triad drill
+  progress.drills.triad = { ...progress.bySyl, ...progress.drills.triad };
+  delete progress.bySyl;
+}
 const session = { attempts: 0, inTune: 0, streak: 0 };
 const saveSettings = () => store.set('solfege.settings', settings);
 
@@ -74,8 +84,8 @@ function setPhase(p, text) {
 function renderQuestion() {
   $('targetSyl').textContent = q.target;
   $('keyLabel').textContent = settings.letters ? q.keyLabel : (q.chord.minor ? 'Minor key' : 'Major key');
-  $('chordTones').innerHTML = q.chord.tones
-    .map((t, i) => `<span class="chip${i === q.targetIdx ? ' target' : ''}">${t}</span>`).join('');
+  $('chordTones').innerHTML = q.chips
+    .map((c) => `<span class="chip${c.target ? ' target' : ''}">${c.label}</span>`).join('');
   $('rootBtn').textContent = `Play ${q.chord.tones[0]}`;
   $('feedback').hidden = true;
   lastFrames = []; lastAnalysis = null;
@@ -98,7 +108,7 @@ async function playEvents(events) {
 }
 
 async function nextQuestion() {
-  q = makeQuestion(settings, q);
+  q = drill().makeQuestion(settings, q);
   renderQuestion();
   if (await playEvents(chordEvents(q, settings.style)) && settings.auto) listen();
 }
@@ -136,7 +146,7 @@ async function listen() {
     return;
   }
   lastAnalysis = a;
-  const fb = feedback(a, q, { toleranceCents: settings.tolerance, showLetters: settings.letters });
+  const fb = DRILLS[q.drill].feedback(a, q, { toleranceCents: settings.tolerance, showLetters: settings.letters });
   showFeedback(fb);
   record(a, fb.verdict);
   $('hearing').textContent = '';
@@ -166,8 +176,8 @@ function record(a, verdict) {
   session.attempts++;
   if (ok) { session.inTune++; session.streak++; } else session.streak = 0;
 
-  const key = `${q.target} (${q.chordKey})`;
-  const s = (progress.bySyl[key] ??= { n: 0, inTune: 0, absCents: 0, onNote: 0 });
+  const byKey = (progress.drills[q.drill] ??= {});
+  const s = (byKey[q.statKey] ??= { n: 0, inTune: 0, absCents: 0, onNote: 0 });
   s.n++;
   if (ok) s.inTune++;
   if (verdict !== 'wrong') { s.onNote++; s.absCents += Math.abs(a.cents); }
@@ -187,7 +197,10 @@ function renderStats() {
   $('stAttempts').textContent = session.attempts;
   $('stCorrect').textContent = session.attempts ? `${Math.round((100 * session.inTune) / session.attempts)}%` : '–';
   $('stStreak').textContent = session.streak;
-  const rows = Object.entries(progress.bySyl).sort(([a], [b]) => a.localeCompare(b));
+  $('statsDrill').textContent = drill().title;
+  const order = settings.drill === sightDrill.id ? sightDrill.CHROMATIC_ORDER : null;
+  const rows = Object.entries(progress.drills[settings.drill] ?? {}).sort(([a], [b]) =>
+    order ? order.indexOf(a) - order.indexOf(b) : a.localeCompare(b));
   $('sylStats').innerHTML = rows.length
     ? rows.map(([k, s]) => `<tr><td>${k}</td><td>${s.n}</td><td>${Math.round((100 * s.inTune) / s.n)}%</td>`
         + `<td>${s.onNote ? Math.round(s.absCents / s.onNote) : '–'}</td></tr>`).join('')
@@ -236,10 +249,10 @@ function drawTrace(frames = [], a = null) {
     g.lineWidth = isTarget ? 2 : isChord ? 1.5 : 1;
     g.setLineDash(isChord || isTarget ? [] : [3, 4]);
     g.beginPath(); g.moveTo(padL, y(m)); g.lineTo(W - padR, y(m)); g.stroke();
-    if (DIATONIC.has(s) || isChord) {
+    if (DIATONIC.has(s) || isChord || isTarget) {
       g.fillStyle = isTarget ? css('--primary') : isChord ? css('--text') : css('--muted');
       g.font = `${isTarget || isChord ? 600 : 400} 13px system-ui, sans-serif`;
-      g.fillText(syllableName(s) + (settings.letters ? ` ${noteName(m, q.chord.minor)}` : ''), 6, y(m));
+      g.fillText((isTarget ? q.target : syllableName(s)) + (settings.letters ? ` ${noteName(m, q.chord.minor)}` : ''), 6, y(m));
     }
   }
   g.setLineDash([]);
@@ -317,6 +330,20 @@ function showCal(cal) {
   $('calInfo').textContent = `Mic calibrated — room noise ${cal.noise.toFixed(4)}, voice gate ${cal.gate.toFixed(4)}.`;
 }
 
+// Switching drills starts a fresh question in the new drill.
+function setDrill(id) {
+  settings.drill = id;
+  saveSettings();
+  renderDrillPicker();
+  renderStats();
+  if (q) nextQuestion();
+}
+
+function renderDrillPicker() {
+  $('drillPicker').innerHTML = Object.values(DRILLS).map((d) =>
+    `<button class="seg${d.id === settings.drill ? ' active' : ''}" data-drill="${d.id}">${d.title}</button>`).join('');
+}
+
 // Voice range can be changed from the Practice screen or Settings; keep both pickers in sync.
 function setVoice(voice) {
   settings.voice = voice;
@@ -341,6 +368,14 @@ function initSettings() {
     $(id).addEventListener('change', (e) => setVoice(e.target.value));
   }
   $('setChord').value = settings.chord;
+  $('setPool').innerHTML = Object.entries(sightDrill.POOLS).map(([k, p]) => `<option value="${k}">${p.label}</option>`).join('');
+  $('setPool').value = settings.sightPool;
+  $('setPool').addEventListener('change', (e) => { settings.sightPool = e.target.value; saveSettings(); });
+  renderDrillPicker();
+  $('drillPicker').addEventListener('click', (e) => {
+    const id = e.target.closest('[data-drill]')?.dataset.drill;
+    if (id && id !== settings.drill) setDrill(id);
+  });
   $('setStyle').value = settings.style;
   $('setTol').value = String(settings.tolerance);
   $('setAuto').checked = settings.auto;
@@ -371,7 +406,7 @@ function initSettings() {
   });
   $('resetBtn').addEventListener('click', () => {
     if (!confirm('Reset all saved progress?')) return;
-    progress.bySyl = {};
+    progress.drills = {};
     store.set('solfege.progress', progress);
     renderStats();
   });

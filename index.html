@@ -26,14 +26,15 @@
     <section id="tab-practice" class="panel active">
       <div class="drill card">
         <div class="drill-head">
-          <h2>Triad Drill</h2>
+          <div id="drillPicker" class="segmented" role="group" aria-label="Drill"></div>
           <label class="range-pick">Chord range <select id="practiceVoice"></select></label>
         </div>
         <div id="keyLabel" class="key-label"></div>
 
         <div id="startBox" class="start-box">
-          <p>I'll play a triad, then ask you to sing one of its notes by its solfège name.
-             I'll listen and tell you how you did.</p>
+          <p>I'll play a major or minor triad to set the key, then ask you to sing a note by its solfège name.
+             In the <strong>Triad Drill</strong> it's one of the chord's notes; in the <strong>Sight-Singing Drill</strong>
+             it can be any chromatic syllable. I'll listen and tell you how you did.</p>
           <p class="muted">Headphones help: they stop the mic from hearing my piano.
              When you click Begin, allow microphone access and stay quiet for a second while I measure the room.</p>
           <button id="beginBtn" class="btn primary big">Begin lesson</button>
@@ -79,7 +80,7 @@
           <div><span id="stCorrect" class="num">0%</span><span class="lbl">in tune</span></div>
           <div><span id="stStreak" class="num">0</span><span class="lbl">streak</span></div>
         </div>
-        <h3>By syllable <span class="muted small">(all time)</span></h3>
+        <h3>By syllable <span class="muted small">— <span id="statsDrill"></span> (all time)</span></h3>
         <table class="syl-table">
           <thead><tr><th>Syllable</th><th>Tries</th><th>In tune</th><th>Avg ¢ off</th></tr></thead>
           <tbody id="sylStats"></tbody>
@@ -156,6 +157,7 @@
       <div class="card settings">
         <h2>Settings</h2>
         <label>Chord range <select id="setVoice"></select></label>
+        <h3>Triad Drill</h3>
         <label>Chord <select id="setChord">
           <option value="major">Major triad (do – mi – sol)</option>
           <option value="minor">Minor triad (la – do – mi)</option>
@@ -164,6 +166,9 @@
           <legend>Ask me to sing</legend>
           <div id="setTargets" class="checks"></div>
         </fieldset>
+        <h3>Sight-Singing Drill</h3>
+        <label>Syllables to practice <select id="setPool"></select></label>
+        <h3>Both drills</h3>
         <label>Playback <select id="setStyle">
           <option value="block">Block chord only</option>
           <option value="both">Arpeggio, then chord</option>

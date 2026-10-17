@@ -23,6 +23,17 @@ and ES modules on `file://`. Use Chrome or Edge, and headphones if you have them
    - **wrong note**: which syllable you actually sang, the interval and direction you were off, and a tip
 4. Any octave counts. Progress is saved per syllable in the browser.
 
+## Exercise 2: Sight-Singing Drill — Solfège
+
+1. A major triad (do–mi–sol) sets the key.
+2. The coach shows a randomly chosen syllable from the full chromatic set:
+   do di ra re ri me mi fa fi se sol si le la li te ti.
+3. Sing it. Grading works as in the Triad Drill, and tips explain altered syllables
+   (e.g. *"fi is a raised fa — find fa, then nudge up a half step"*).
+4. Accuracy is tracked per syllable. Settings can limit the drill to diatonic-only or altered-only syllables.
+
+Switch drills with the picker at the top of the Practice screen.
+
 Settings: chord range (soprano–bass, also on the Practice screen), major (do–mi–sol) or minor (la–do–mi) triad, which chord tones to ask for,
 playback style, tolerance, auto-listen, letter names on/off.
 
@@ -33,8 +44,10 @@ playback style, tolerance, auto-listen, letter names on/off.
 | `js/theory.js` | Pitch math, syllables (incl. chromatic), la-based minor scales, chords, voice ranges |
 | `js/synth.js` | Web Audio piano-like synth |
 | `js/pitch.js` | Mic input, YIN pitch detection, noise calibration, single-note capture |
-| `js/triadDrill.js` | Exercise logic: question generation, attempt analysis, grading, coach feedback |
+| `js/drillCommon.js` | Shared drill logic: chord playback, attempt analysis, grading, feedback framing |
+| `js/triadDrill.js` | Drill 1: sing a chord tone of the triad |
+| `js/sightDrill.js` | Drill 2: sight-sing any chromatic syllable over a major triad |
 | `js/app.js` | UI controller, pitch trace, progress, Learn page |
 
-New drills can follow the `triadDrill.js` pattern: `makeQuestion`, the events to play,
-`analyzeAttempt`, and `feedback`.
+New drills export `id`, `title`, `makeQuestion(settings, prev)` and `feedback(analysis, q, opts)`
+(see `sightDrill.js`), then get registered in `DRILLS` in `app.js`.
