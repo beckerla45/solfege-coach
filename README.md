@@ -15,7 +15,7 @@ and ES modules on `file://`. Use Chrome or Edge, and headphones if you have them
 
 ## Exercise 1: Triad Drill
 
-1. The coach plays a triad (all three notes together) in a random key within your voice range.
+1. The coach plays a triad (all three notes together) in a random key within the chosen chord range.
 2. It asks for one chord tone, e.g. **"Sing mi"**.
 3. Sing and hold the note for about two seconds. The coach tracks your pitch live and then reports:
    - **in tune**: within the tolerance (default ±25 cents)
