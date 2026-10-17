@@ -23,7 +23,7 @@ and ES modules on `file://`. Use Chrome or Edge, and headphones if you have them
    - **wrong note**: which syllable you actually sang, the interval and direction you were off, and a tip
 4. Any octave counts. Progress is saved per syllable in the browser.
 
-Settings: voice range, major (do–mi–sol) or minor (la–do–mi) triad, which chord tones to ask for,
+Settings: chord range (soprano–bass, also on the Practice screen), major (do–mi–sol) or minor (la–do–mi) triad, which chord tones to ask for,
 playback style, tolerance, auto-listen, letter names on/off.
 
 ## Code layout

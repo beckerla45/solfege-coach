@@ -317,6 +317,15 @@ function showCal(cal) {
   $('calInfo').textContent = `Mic calibrated — room noise ${cal.noise.toFixed(4)}, voice gate ${cal.gate.toFixed(4)}.`;
 }
 
+// Voice range can be changed from the Practice screen or Settings; keep both pickers in sync.
+function setVoice(voice) {
+  settings.voice = voice;
+  saveSettings();
+  $('setVoice').value = $('practiceVoice').value = voice;
+  renderLearn();
+  if (q) nextQuestion(); // hear a chord in the new range right away
+}
+
 function renderTargetChecks() {
   const chord = CHORDS[settings.chord];
   $('setTargets').innerHTML = chord.tones.map((t, i) =>
@@ -325,8 +334,12 @@ function renderTargetChecks() {
 }
 
 function initSettings() {
-  $('setVoice').innerHTML = Object.entries(VOICES).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('');
-  $('setVoice').value = settings.voice;
+  const voiceOptions = Object.entries(VOICES).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('');
+  for (const id of ['setVoice', 'practiceVoice']) {
+    $(id).innerHTML = voiceOptions;
+    $(id).value = settings.voice;
+    $(id).addEventListener('change', (e) => setVoice(e.target.value));
+  }
   $('setChord').value = settings.chord;
   $('setStyle').value = settings.style;
   $('setTol').value = String(settings.tolerance);
@@ -336,7 +349,6 @@ function initSettings() {
   $('setVol').value = settings.volume;
   renderTargetChecks();
 
-  $('setVoice').addEventListener('change', (e) => { settings.voice = e.target.value; saveSettings(); renderLearn(); });
   $('setChord').addEventListener('change', (e) => { settings.chord = e.target.value; saveSettings(); renderTargetChecks(); });
   $('setStyle').addEventListener('change', (e) => { settings.style = e.target.value; saveSettings(); });
   $('setTol').addEventListener('change', (e) => { settings.tolerance = Number(e.target.value); saveSettings(); });

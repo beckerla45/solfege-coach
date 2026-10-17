@@ -27,8 +27,9 @@
       <div class="drill card">
         <div class="drill-head">
           <h2>Triad Drill</h2>
-          <span id="keyLabel" class="key-label"></span>
+          <label class="range-pick">Chord range <select id="practiceVoice"></select></label>
         </div>
+        <div id="keyLabel" class="key-label"></div>
 
         <div id="startBox" class="start-box">
           <p>I'll play a triad, then ask you to sing one of its notes by its solfège name.
@@ -154,7 +155,7 @@
     <section id="tab-settings" class="panel">
       <div class="card settings">
         <h2>Settings</h2>
-        <label>Voice range <select id="setVoice"></select></label>
+        <label>Chord range <select id="setVoice"></select></label>
         <label>Chord <select id="setChord">
           <option value="major">Major triad (do – mi – sol)</option>
           <option value="minor">Minor triad (la – do – mi)</option>
