@@ -3,9 +3,13 @@
 A browser-based singing coach for **movable-do solfège with la-based minor**. It plays a chord,
 asks you to sing a note by its syllable, listens through your microphone, and tells you how you did.
 
+**▶ Try it online: https://beckerla45.github.io/solfege-coach/**
+
 ## Run it
 
-Double-click `start.bat` (or run `python serve.py`). It serves the app at http://localhost:8123 and opens
+Online: open the link above, click **Begin lesson**, and allow microphone access.
+
+Locally: double-click `start.bat` (or run `python serve.py`). It serves the app at http://localhost:8123 and opens
 your browser. Opening `index.html` straight from disk won't work, because browsers block the microphone
 and ES modules on `file://`. Use Chrome or Edge, and headphones if you have them.
 
